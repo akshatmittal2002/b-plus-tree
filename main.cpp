@@ -1,318 +1,321 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-class tree_node;
-
+class Bplus_node;
 class node{
     public:
-        int data_val;
-        tree_node *leftchild;
+        int data;
+        Bplus_node *left;
         node(){
-            leftchild = nullptr;
+            left = nullptr;
         }
 };
 
-class tree_node{
+class Bplus_node{
     public:
-        vector<node *> val;
+        vector<node *> content;
         bool isDataNode;
-        tree_node *right_child;
-        tree_node *parent;
-        tree_node(){
-            right_child = nullptr;
+        Bplus_node *right;
+        Bplus_node *parent;
+        Bplus_node(){
+            right = nullptr;
             parent = nullptr;
             isDataNode = false;
         }
 };
 
-bool compare(node* &a, node* &b){
-    return (a->data_val) < (b->data_val);
-}
-
-class b_plus_tree{
+class Bplus_tree{
     public:
-        tree_node *root;
+        Bplus_node *root;
         int d, t;
-        b_plus_tree(int d, int t){
+        Bplus_tree(int d, int t){
             root = nullptr;
             this->d = d;
             this->t = t;
         }
         void insert(int data);
-        int countIndexNodes(tree_node *node);
-        int countDataNodes(tree_node *node);
-        void status();
+        int CountIndex(Bplus_node *node);
+        int CountData(Bplus_node *node);
+        void display();
 };
+
+bool cmp(node* &a, node* &b){
+    return (a->data) < (b->data);
+}
 
 int main(){
     int d, t;
     cin>>d>>t;
-    b_plus_tree tree(d, t);
-    int x,val;
+    Bplus_tree tree(d, t);
+    int x,value;
     cin>>x;
     while (x != 3){
         if (x == 1){
-            cin>>val;
-            tree.insert(val);
+            cin>>value;
+            tree.insert(value);
         }
         else if (x == 2){
-            tree.status();
-        }
-        else{
-            // cout<<"Invalid Command!";
+            tree.display();
         }
         cin>>x;
     }
     return 0;
 }
 
-void b_plus_tree::status(){
+void Bplus_tree::display(){
     if (root == nullptr){
         cout<<"0 0\n";
         return;
     };
-    cout<<countIndexNodes(root)<<" "<<countDataNodes(root);
-    for (int i = 0; i < root->val.size(); i++){
-        cout<<" "<<(root->val[i])->data_val;
+    cout<<CountIndex(root)<<" "<<CountData(root);
+    for (int i = 0; i < root->content.size(); i++){
+        cout<<" "<<(root->content[i])->data;
     }
     cout<<"\n";
 }
 
-int b_plus_tree::countDataNodes(tree_node *node){
+int Bplus_tree::CountData(Bplus_node *node){
     if (node == nullptr) return 0;
     if (node->isDataNode == true) return 1;
     int k = 0;
-    for (int i = 0; i < node->val.size(); i++){
-        k += countDataNodes((node->val[i])->leftchild);
+    for (int i = 0; i < node->content.size(); i++){
+        k += CountData((node->content[i])->left);
     }
-    k += countDataNodes(node->right_child);
+    k += CountData(node->right);
     return k;
 }
 
-int b_plus_tree::countIndexNodes(tree_node *node){
+int Bplus_tree::CountIndex(Bplus_node *node){
     if (node == nullptr) return 0;
     if (node->isDataNode == true) return 0;
     int k = 1;
-    for (int i = 0; i < node->val.size(); i++){
-        k += countIndexNodes((node->val[i])->leftchild);
+    for (int i = 0; i < node->content.size(); i++){
+        k += CountIndex((node->content[i])->left);
     }
-    k += countIndexNodes(node->right_child);
+    k += CountIndex(node->right);
     return k;
 }
 
-void b_plus_tree::insert(int data){
+void Bplus_tree::insert(int data){
+    node *n;
     // First Insertion, i.e., root is null
     if (root == nullptr){
-        tree_node *x = new tree_node();
+        Bplus_node *x = new Bplus_node(); // Create a new data node
         x->isDataNode = true;
-        node *n = new node();
-        n->data_val = data;
-        x->val.push_back(n);
-        root = x;
+        n = new node(); // Create a new entry in this data node
+        n->data = data;
+        x->content.push_back(n);
+        root = x; //Set root of B Plus tree to this new data node
         return;
     }
     // Root is a Data Node
     if (root->isDataNode == true){
-        // Before insertion root is not full
-        if (root->val.size() < 2*d){
-            node *n = new node();
-            n->data_val = data;
-            root->val.push_back(n);
-            sort(root->val.begin(), root->val.end(), compare);
+        // Root is not full
+        if (root->content.size() < 2*d){
+            n = new node(); // Create a new entry in the root
+            n->data = data;
+            root->content.push_back(n);
+            sort(root->content.begin(), root->content.end(), cmp); // Sort the elements in data node
         }
-        // Before insertion root is full
+        // Root is full
         else{
-            node *n = new node();
-            n->data_val = data;
-            root->val.push_back(n);
-            sort(root->val.begin(), root->val.end(), compare);
+            n = new node(); // Create a new entry in current root
+            n->data = data;
+            root->content.push_back(n);
+            sort(root->content.begin(), root->content.end(), cmp); // Sort the contents
 
-            tree_node *right_node = new tree_node();
+            Bplus_node *right_node = new Bplus_node(); // Create a new data node
             right_node->isDataNode = true;
-
-            for (int i = d; i < root->val.size(); i++){
-                node *n = new node();
-                n->data_val = (root->val[i])->data_val;
-                right_node->val.push_back(n);
+            //Split the current data node in two parts: d and d+1
+            for (int i = d; i < root->content.size(); i++){
+                n = new node();
+                n->data = (root->content[i])->data;
+                right_node->content.push_back(n);
             }
             for (int i = 0; i <= d; i++){
-                root->val.pop_back();
+                n = root->content.back();
+                root->content.pop_back();
+                delete(n);
             }
-
-            tree_node *new_root = new tree_node();
-
+            // Now create new index node and insert the smallest entry of right data node in this.
+            Bplus_node *new_root = new Bplus_node();
             n = new node();
-            n->data_val = (right_node->val[0])->data_val;
-            n->leftchild = root;
-
-            new_root->val.push_back(n);
-            new_root->right_child = right_node;
-
-            root = new_root;
-            ((root->val[0])->leftchild)->parent = root;
-            (root->right_child)->parent = root;
+            n->data = (right_node->content[0])->data;
+            n->left = root;
+            new_root->content.push_back(n);
+            new_root->right = right_node;
+            root = new_root; // Set root to new index node and also set parent pointers.
+            ((root->content[0])->left)->parent = root;
+            (root->right)->parent = root;
         }
         return;
     }
     // Root is index node
-    // Finding data node
-    tree_node *curr = root;
+    // Find the data node in which new value is to be inserted
+    Bplus_node *curr = root;
+    int k;
     while (curr->isDataNode == false){
-        int k = 0;
-        for (int i = 0; i < curr->val.size(); i++){
-            if (curr->val[i]->data_val > data){
+        k = 0;
+        for (int i = 0; i < curr->content.size(); i++){
+            if (curr->content[i]->data > data){
                 k = 1;
-                curr = (curr->val[i])->leftchild;
+                curr = (curr->content[i])->left;
                 break;
             }
         }
         if (k == 0){
-            curr = curr->right_child;
+            curr = curr->right;
         }
     }
-
-    if (curr->val.size() < 2 * d){
-        node *n = new node();
-        n->data_val = data;
-        curr->val.push_back(n);
-        sort(curr->val.begin(), curr->val.end(), compare);
+    // Once the correct Data node is found, check if it is full or not
+    // If not full
+    if (curr->content.size() < 2 * d){
+        n = new node(); // Just create a new entry in the data node
+        n->data = data;
+        curr->content.push_back(n);
+        sort(curr->content.begin(), curr->content.end(), cmp); // Sort the elements
         return;
     }
-
-    // Adding new values in data node
-    node *n = new node();
-    n->data_val = data;
-    curr->val.push_back(n);
-    sort(curr->val.begin(), curr->val.end(), compare);
-
-    // splitting data node
-    tree_node *right_node = new tree_node();
+    // Else if full
+    n = new node(); // Create a new entry in this data node
+    n->data = data;
+    curr->content.push_back(n);
+    sort(curr->content.begin(), curr->content.end(), cmp); // Sort the values
+    Bplus_node *right_node = new Bplus_node(); // Create a new data node
     right_node->isDataNode = true;
-
-    for (int i = d; i < curr->val.size(); i++){
-        node *n = new node();
-        n->data_val = curr->val[i]->data_val;
-        right_node->val.push_back(n);
+    //Split the current data node in two parts: d and d+1
+    for (int i = d; i < curr->content.size(); i++){
+        n = new node();
+        n->data = curr->content[i]->data;
+        right_node->content.push_back(n);
     }
     for (int i = 0; i < d + 1; i++){
-        curr->val.pop_back();
+        n = curr->content.back();
+        curr->content.pop_back();
+        delete(n);
     }
+    right_node->parent = curr->parent; // Set parent pointer
 
-    // Sending index value to parent
-    n = new node();
-    n->data_val = right_node->val[0]->data_val;
-    right_node->parent = curr->parent;
-
-    n->leftchild = curr;
-    if (n->data_val > curr->parent->val[curr->parent->val.size() - 1]->data_val){
-        curr->parent->val.push_back(n);
-        curr->parent->right_child = right_node;
+    // Send index value to the parent
+    n = new node(); // New Entry in Parent
+    n->data = (right_node->content[0])->data; // It's value is smallest value in right child
+    n->left = curr; // Set left child
+    // If new entry is largest entry of index node, just insert it and update the right child pointer
+    if (n->data > ((curr->parent)->content.back())->data){
+        (curr->parent)->content.push_back(n);
+        (curr->parent)->right = right_node;
     }
+    // Else we have to update some other pointer
     else{
-        curr->parent->val.push_back(n);
-        tree_node *curr_parent = curr->parent;
-        sort(curr_parent->val.begin(), curr_parent->val.end(), compare);
-        int j = 0;
-        for (j = 0; j < curr_parent->val.size(); j++){
-            if (curr_parent->val[j]->data_val == n->data_val){
+        (curr->parent)->content.push_back(n); // Insert into index node
+        Bplus_node *curr_parent = curr->parent;
+        sort(curr_parent->content.begin(), curr_parent->content.end(), cmp); // Sort the index node
+        int j = 0; // Find the location where pointers need to be updated and update it.
+        for (j = 0; j < curr_parent->content.size(); j++){
+            if (curr_parent->content[j]->data == n->data){
                 break;
             }
         }
-        curr_parent->val[j + 1]->leftchild = right_node;
+        curr_parent->content[j + 1]->left = right_node;
     }
     curr = curr->parent;
     if (curr == nullptr){
         return;
     }
-    while (curr->val.size() > 2 * t + 1){
-        // Special root case
+    // If index node exeecds maximum capacity
+    while (curr->content.size() > (2*t+1)){
+        // Special root case, to be handled after this loop
         if (curr == root || curr == nullptr){
             break;
         }
-
-        // Splitting index node
-        tree_node *right_node = new tree_node();
-        right_node->isDataNode = false;
-
-        int up_val = curr->val[t]->data_val;
-        for (int i = t + 1; i < curr->val.size(); i++){
-            node *n = new node();
-            n->data_val = curr->val[i]->data_val;
-            n->leftchild = curr->val[i]->leftchild;
-            right_node->val.push_back(n);
+        // Split the current index node
+        Bplus_node *right_node = new Bplus_node(); // Create a new index node
+        int value_up = curr->content[t]->data; // The value to be sent to parent after splitting
+        // Split into t,1,t+1; 1->up to parent
+        for (int i = t + 1; i < curr->content.size(); i++){
+            n = new node();
+            n->data = curr->content[i]->data;
+            n->left = curr->content[i]->left;
+            right_node->content.push_back(n);
         }
-
+        // Update all pointers
         right_node->parent = curr->parent;
-        right_node->right_child = curr->right_child;
-        curr->right_child = curr->val[t]->leftchild;
+        right_node->right = curr->right;
+        curr->right = curr->content[t]->left; // Left child of the value to be sent to parent
+        // Delete the nodes transfered to new node and parent
         for (int i = 0; i < t + 2; i++){
-            curr->val.pop_back();
+            n = curr->content.back();
+            curr->content.pop_back();
+            delete(n);
         }
-        for (int i = 0; i < right_node->val.size(); i++){
-            right_node->val[i]->leftchild->parent = right_node;
+        // Update parent pointer of children of splitted index node
+        for (int i = 0; i < right_node->content.size(); i++){
+            ((right_node->content[i])->left)->parent = right_node;
         }
-        right_node->right_child->parent = right_node;
+        (right_node->right)->parent = right_node;
 
-        // Sending index value to parent
-        node *n = new node();
-        n->data_val = up_val;
-        n->leftchild = curr;
-
-        if (n->data_val > curr->parent->val[curr->parent->val.size() - 1]->data_val){
-            curr->parent->val.push_back(n);
-            curr->parent->right_child = right_node;
+        // Insert the middle value into parent node.
+        n = new node();
+        n->data = value_up;
+        n->left = curr;
+        // If new entry is largest entry of index node, just insert it and update the right child pointer
+        if (n->data > ((curr->parent)->content.back())->data){
+            (curr->parent)->content.push_back(n);
+            (curr->parent)->right = right_node;
         }
+        // Else we have to update some other pointer
         else{
-            curr->parent->val.push_back(n);
-            tree_node *curr_parent = curr->parent;
-            sort(curr_parent->val.begin(), curr_parent->val.end(), compare);
-            int j = 0;
-            for (j = 0; j < curr_parent->val.size(); j++){
-                if (curr_parent->val[j]->data_val == n->data_val){
+            (curr->parent)->content.push_back(n); // Insert into parent node
+            Bplus_node *curr_parent = curr->parent;
+            sort(curr_parent->content.begin(), curr_parent->content.end(), cmp); // Sort the parent node
+            int j = 0; // Find the location where pointers need to be updated and update it.
+            for (j = 0; j < curr_parent->content.size(); j++){
+                if (curr_parent->content[j]->data == n->data){
                     break;
                 }
             }
-            curr_parent->val[j + 1]->leftchild = right_node;
+            curr_parent->content[j + 1]->left = right_node;
         }
         curr = curr->parent;
     }
-
-    if (curr == root && curr->val.size() > 2 * t + 1){
-        tree_node *right_node = new tree_node();
-        right_node->isDataNode = false;
-
-        int up_val = curr->val[t]->data_val;
-
-        for (int i = t + 1; i < root->val.size(); i++){
-            node *n = new node();
-            n->data_val = root->val[i]->data_val;
-            n->leftchild = root->val[i]->leftchild;
-            right_node->val.push_back(n);
+    // Now after exiting the loop, current pointer will be pointing to root
+    // If it exeeds the max capacity, split the root.
+    if (curr == root && curr->content.size() > (2*t+1)){
+        // Create a new index node
+        Bplus_node *right_node = new Bplus_node();
+        int value_up = curr->content[t]->data; // Middle value to be sent to new root.
+        // Split into t,1,t+1; 1->up to parent
+        for (int i = t+1; i < root->content.size(); i++){
+            n = new node();
+            n->data = root->content[i]->data;
+            n->left = root->content[i]->left;
+            right_node->content.push_back(n);
         }
-
-        right_node->right_child = curr->right_child;
-        curr->right_child = curr->val[t]->leftchild;
-
+        // Update pointers
+        right_node->right = curr->right;
+        curr->right = (curr->content[t])->left; // Left child of the value to be sent to parent
+        // Delete the nodes transfered to new node and parent
         for (int i = 0; i < t + 2; i++){
-            root->val.pop_back();
+            n = root->content.back();
+            root->content.pop_back();
+            delete(n);
         }
-        for (int i = 0; i < right_node->val.size(); i++){
-            right_node->val[i]->leftchild->parent = right_node;
+        // Update parent pointer of children of splitted index node
+        for (int i = 0; i < right_node->content.size(); i++){
+            right_node->content[i]->left->parent = right_node;
         }
-        right_node->right_child->parent = right_node;
-
-        tree_node *new_root = new tree_node();
-        new_root->isDataNode = false;
-
+        right_node->right->parent = right_node;
+        // Create a new root
+        Bplus_node *new_root = new Bplus_node();
+        // Insert the value into root
         n = new node();
-        n->data_val = up_val;
-        n->leftchild = root;
-
-        new_root->val.push_back(n);
-        new_root->right_child = right_node;
-
+        n->data = value_up;
+        n->left = root;
+        new_root->content.push_back(n);
+        new_root->right = right_node;
+        // Update new root
         root = new_root;
-        root->val[0]->leftchild->parent = root;
-        root->right_child->parent = root;
+        ((root->content[0])->left)->parent = root;
+        (root->right)->parent = root;
     }
 }
